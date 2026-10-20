@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\ClientController;
 use App\Http\Controllers\Api\V1\CompanyController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\InvoiceController;
 
 Route::middleware('auth:sanctum')
 ->prefix('v1')
@@ -19,5 +20,6 @@ Route::middleware('auth:sanctum')
         Route::get('/',[CompanyController::class, 'show']);
         Route::apiResource('clients', ClientController::class)->except(['destroy',]);
         Route::apiResource('products',ProductController::class)->except(['destroy',]);
+        Route::apiResource('invoices',InvoiceController::class)->only(['index','store','show',]);
     });
 });

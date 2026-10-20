@@ -10,6 +10,7 @@ use App\Models\FiscalCertificate;
 use App\Models\PacAccount;
 use App\Models\FiscalSequence;
 use App\Models\Concerns\HasPublicUlid;
+use App\Models\Invoice;
 
 class Company extends Model
 {
@@ -75,5 +76,10 @@ class Company extends Model
     public function products()
     {
         return $this->hasMany(Product::class);
+    }
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
     }
 }
