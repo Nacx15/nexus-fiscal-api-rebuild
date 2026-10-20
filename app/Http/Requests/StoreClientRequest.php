@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Validation\Rule;
-use Illuminate\Foundation\Http\FormRequest;
 use App\Rules\ValidSatCatalogCode;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreClientRequest extends FormRequest
 {
@@ -45,8 +45,7 @@ class StoreClientRequest extends FormRequest
 
                 Rule::unique('clients', 'rfc')
                     ->where(
-                        fn ($query) =>
-                        $query->where(
+                        fn ($query) => $query->where(
                             'company_id',
                             $company->id
                         )

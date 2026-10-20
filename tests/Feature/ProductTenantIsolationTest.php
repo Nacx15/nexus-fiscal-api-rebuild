@@ -5,9 +5,9 @@ namespace Tests\Feature;
 use App\Models\Company;
 use App\Models\Product;
 use App\Models\User;
+use Database\Seeders\SatCatalogTestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use Database\Seeders\SatCatalogTestSeeder;
 
 class ProductTenantIsolationTest extends TestCase
 {
@@ -100,11 +100,9 @@ class ProductTenantIsolationTest extends TestCase
         $this->assertDatabaseMissing(
             'products',
             [
-                'company_id' =>
-                    $otherCompany->id,
+                'company_id' => $otherCompany->id,
 
-                'sku' =>
-                    'SERV-001',
+                'sku' => 'SERV-001',
             ]
         );
     }
@@ -225,11 +223,9 @@ class ProductTenantIsolationTest extends TestCase
         $product = Product::factory()->create([
             'company_id' => $company->id,
 
-            'unit_price' =>
-                '123.456789',
+            'unit_price' => '123.456789',
 
-            'default_tax_rate' =>
-                '0.160000',
+            'default_tax_rate' => '0.160000',
         ]);
 
         $product->refresh();
@@ -253,5 +249,4 @@ class ProductTenantIsolationTest extends TestCase
             SatCatalogTestSeeder::class
         );
     }
-    
 }

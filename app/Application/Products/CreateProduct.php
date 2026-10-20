@@ -9,16 +9,14 @@ final class CreateProduct
 {
     public function __construct(
         private readonly CompanyContext $companyContext
-    ) {
-    }
+    ) {}
 
     public function execute(array $data): Product
     {
         return Product::create([
             ...$data,
 
-            'company_id' =>
-                $this->companyContext->id(),
+            'company_id' => $this->companyContext->id(),
         ]);
     }
 }

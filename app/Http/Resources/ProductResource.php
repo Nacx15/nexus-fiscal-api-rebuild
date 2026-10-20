@@ -19,35 +19,25 @@ class ProductResource extends JsonResource
 
             'sku' => $this->sku,
 
-            'sat_product_code' =>
-                $this->sat_product_code,
+            'sat_product_code' => $this->sat_product_code,
 
-            'sat_unit_code' =>
-                $this->sat_unit_code,
+            'sat_unit_code' => $this->sat_unit_code,
 
-            'unit_name' =>
-                $this->unit_name,
+            'unit_name' => $this->unit_name,
 
-            'description' =>
-                $this->description,
+            'description' => $this->description,
 
-            'unit_price' =>
-                $this->unit_price,
+            'unit_price' => $this->unit_price,
 
-            'default_tax_rate' =>
-                $this->default_tax_rate,
+            'default_tax_rate' => $this->default_tax_rate,
 
-            'tax_object' =>
-                $this->tax_object,
+            'tax_object' => $this->tax_object,
 
-            'status' =>
-                $this->status->value,
+            'status' => $this->status->value,
 
-            'created_at' =>
-                $this->created_at,
+            'created_at' => $this->created_at,
 
-            'updated_at' =>
-                $this->updated_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

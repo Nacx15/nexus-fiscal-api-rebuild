@@ -12,8 +12,7 @@ class ResolveCompany
 {
     public function __construct(
         private readonly CompanyContext $companyContext
-    ) {
-    }
+    ) {}
 
     public function handle(
         Request $request,

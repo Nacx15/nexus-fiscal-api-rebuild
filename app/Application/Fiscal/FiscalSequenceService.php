@@ -12,8 +12,7 @@ final class FiscalSequenceService
 {
     public function __construct(
         private readonly CompanyContext $companyContext
-    ) {
-    }
+    ) {}
 
     public function next(
         FiscalDocumentType $documentType,
@@ -61,7 +60,7 @@ final class FiscalSequenceService
                 'series' => $sequence->series,
                 'number' => $nextNumber,
                 'formatted' => $sequence->series
-                    . $formattedNumber,
+                    .$formattedNumber,
             ];
         });
     }

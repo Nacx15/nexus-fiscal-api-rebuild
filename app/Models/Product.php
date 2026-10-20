@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use App\Domain\Shared\Enums\RecordStatus;
 use App\Models\Concerns\HasPublicUlid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Domain\Shared\Enums\RecordStatus;
 
 class Product extends Model
 {

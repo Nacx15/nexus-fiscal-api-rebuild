@@ -127,7 +127,4 @@ class SatCatalogValidationTest extends TestCase
             $validator->fails()
         );
     }
-
-
-
 }

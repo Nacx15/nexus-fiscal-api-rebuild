@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class FiscalCertificate extends Model
 {
-     use HasFactory;
+    use HasFactory;
 
     protected $fillable = [
         'company_id',

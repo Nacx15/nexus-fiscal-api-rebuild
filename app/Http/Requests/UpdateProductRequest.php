@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\ValidSatCatalogCode;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Rules\ValidSatCatalogCode;
 
 class UpdateProductRequest extends FormRequest
 {
@@ -68,8 +68,7 @@ class UpdateProductRequest extends FormRequest
 
                 Rule::unique('products', 'sku')
                     ->where(
-                        fn ($query) =>
-                        $query->where(
+                        fn ($query) => $query->where(
                             'company_id',
                             $company->id
                         )

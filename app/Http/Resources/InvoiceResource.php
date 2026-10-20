@@ -17,121 +17,85 @@ class InvoiceResource extends JsonResource
         return [
             'id' => $this->public_id,
 
-            'status' =>
-                $this->status->value,
+            'status' => $this->status->value,
 
-            'series' =>
-                $this->series,
+            'series' => $this->series,
 
-            'folio' =>
-                $this->folio,
+            'folio' => $this->folio,
 
             'receiver' => [
-                'rfc' =>
-                    $this->receiver_rfc,
+                'rfc' => $this->receiver_rfc,
 
-                'name' =>
-                    $this->receiver_name,
+                'name' => $this->receiver_name,
 
-                'tax_regime' =>
-                    $this->receiver_tax_regime,
+                'tax_regime' => $this->receiver_tax_regime,
 
-                'postal_code' =>
-                    $this->receiver_postal_code,
+                'postal_code' => $this->receiver_postal_code,
             ],
 
-            'payment_form' =>
-                $this->payment_form,
+            'payment_form' => $this->payment_form,
 
-            'payment_method' =>
-                $this->payment_method,
+            'payment_method' => $this->payment_method,
 
-            'cfdi_use' =>
-                $this->cfdi_use,
+            'cfdi_use' => $this->cfdi_use,
 
-            'currency' =>
-                $this->currency,
+            'currency' => $this->currency,
 
-            'subtotal' =>
-                $this->subtotal,
+            'subtotal' => $this->subtotal,
 
-            'discount' =>
-                $this->discount,
+            'discount' => $this->discount,
 
-            'transferred_taxes' =>
-                $this->transferred_taxes,
+            'transferred_taxes' => $this->transferred_taxes,
 
-            'withheld_taxes' =>
-                $this->withheld_taxes,
+            'withheld_taxes' => $this->withheld_taxes,
 
-            'total' =>
-                $this->total,
+            'total' => $this->total,
 
-            'items' =>
-                $this->whenLoaded(
-                    'items',
-                    fn () =>
-                    $this->items->map(
-                        fn ($item) => [
-                            'position' =>
-                                $item->position,
+            'items' => $this->whenLoaded(
+                'items',
+                fn () => $this->items->map(
+                    fn ($item) => [
+                        'position' => $item->position,
 
-                            'product_code' =>
-                                $item->product_code,
+                        'product_code' => $item->product_code,
 
-                            'unit_code' =>
-                                $item->unit_code,
+                        'unit_code' => $item->unit_code,
 
-                            'description' =>
-                                $item->description,
+                        'description' => $item->description,
 
-                            'quantity' =>
-                                $item->quantity,
+                        'quantity' => $item->quantity,
 
-                            'unit_price' =>
-                                $item->unit_price,
+                        'unit_price' => $item->unit_price,
 
-                            'discount' =>
-                                $item->discount,
+                        'discount' => $item->discount,
 
-                            'subtotal' =>
-                                $item->subtotal,
+                        'subtotal' => $item->subtotal,
 
-                            'tax_object' =>
-                                $item->tax_object,
+                        'tax_object' => $item->tax_object,
 
-                            'total' =>
-                                $item->total,
+                        'total' => $item->total,
 
-                            'taxes' =>
-                                $item->taxes
-                                    ->map(
-                                        fn ($tax) => [
-                                            'tax' =>
-                                                $tax->tax,
+                        'taxes' => $item->taxes
+                            ->map(
+                                fn ($tax) => [
+                                    'tax' => $tax->tax,
 
-                                            'type' =>
-                                                $tax->type,
+                                    'type' => $tax->type,
 
-                                            'factor_type' =>
-                                                $tax->factor_type,
+                                    'factor_type' => $tax->factor_type,
 
-                                            'rate_or_quota' =>
-                                                $tax->rate_or_quota,
+                                    'rate_or_quota' => $tax->rate_or_quota,
 
-                                            'base' =>
-                                                $tax->base,
+                                    'base' => $tax->base,
 
-                                            'amount' =>
-                                                $tax->amount,
-                                        ]
-                                    ),
-                        ]
-                    )
-                ),
+                                    'amount' => $tax->amount,
+                                ]
+                            ),
+                    ]
+                )
+            ),
 
-            'created_at' =>
-                $this->created_at,
+            'created_at' => $this->created_at,
         ];
     }
 }

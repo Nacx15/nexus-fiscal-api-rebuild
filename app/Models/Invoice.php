@@ -6,6 +6,7 @@ use App\Domain\Invoice\Enums\InvoiceStatus;
 use App\Models\Concerns\HasPublicUlid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class Invoice extends Model
 {
@@ -62,11 +63,9 @@ class Invoice extends Model
             'subtotal' => 'decimal:6',
             'discount' => 'decimal:6',
 
-            'transferred_taxes' =>
-                'decimal:6',
+            'transferred_taxes' => 'decimal:6',
 
-            'withheld_taxes' =>
-                'decimal:6',
+            'withheld_taxes' => 'decimal:6',
 
             'total' => 'decimal:6',
 
@@ -109,5 +108,13 @@ class Invoice extends Model
         return $this->hasMany(
             InvoiceItem::class
         )->orderBy('position');
+    }
+
+    public function fiscalDocument(): MorphOne
+    {
+        return $this->morphOne(
+            FiscalDocument::class,
+            'documentable'
+        );
     }
 }

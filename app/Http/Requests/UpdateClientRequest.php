@@ -2,9 +2,8 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Foundation\Http\FormRequest;
 use App\Rules\ValidSatCatalogCode;
+use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateClientRequest extends FormRequest
 {
@@ -26,12 +25,11 @@ class UpdateClientRequest extends FormRequest
 
         if ($this->has('business_name')) {
             $this->merge([
-                'business_name' =>
-                    trim($this->business_name),
+                'business_name' => trim($this->business_name),
             ]);
         }
     }
-    
+
     public function rules(): array
     {
         $company = $this->route('company');
@@ -54,8 +52,7 @@ class UpdateClientRequest extends FormRequest
 
                 Rule::unique('clients', 'rfc')
                     ->where(
-                        fn ($query) =>
-                        $query->where(
+                        fn ($query) => $query->where(
                             'company_id',
                             $company->id
                         )

@@ -33,8 +33,7 @@ class StoreInvoiceRequest extends FormRequest
                     'clients',
                     'public_id'
                 )->where(
-                    fn ($query) =>
-                    $query
+                    fn ($query) => $query
                         ->where(
                             'company_id',
                             $company->id
@@ -96,8 +95,7 @@ class StoreInvoiceRequest extends FormRequest
                     'products',
                     'public_id'
                 )->where(
-                    fn ($query) =>
-                    $query
+                    fn ($query) => $query
                         ->where(
                             'company_id',
                             $company->id

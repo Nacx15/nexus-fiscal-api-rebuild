@@ -4,15 +4,13 @@ namespace App\Rules;
 
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Translation\PotentiallyTranslatedString;
 use Illuminate\Support\Facades\DB;
 
 class ValidSatCatalogCode implements ValidationRule
 {
     public function __construct(
         private readonly string $table
-    ) {
-    }
+    ) {}
 
     public function validate(
         string $attribute,

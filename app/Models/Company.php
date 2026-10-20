@@ -2,15 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicUlid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use App\Models\CompanyFiscalProfile;
-use App\Models\FiscalCertificate;
-use App\Models\PacAccount;
-use App\Models\FiscalSequence;
-use App\Models\Concerns\HasPublicUlid;
-use App\Models\Invoice;
 
 class Company extends Model
 {
@@ -81,5 +76,10 @@ class Company extends Model
     public function invoices()
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    public function fiscalDocuments()
+    {
+        return $this->hasMany(FiscalDocument::class);
     }
 }

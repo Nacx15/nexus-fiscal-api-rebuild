@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
 use App\Application\Company\CompanyContext;
+use App\Models\Invoice;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -14,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(
             CompanyContext::class,
-            fn () => new CompanyContext()
+            fn () => new CompanyContext
         );
     }
 
@@ -23,6 +26,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Relation::enforceMorphMap([
+            'invoice' => Invoice::class,
+            'user' => User::class,
+        ]);
     }
 }

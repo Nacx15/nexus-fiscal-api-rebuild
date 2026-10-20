@@ -69,11 +69,11 @@ final class DecimalCalculator
     ): string {
         $increment =
             '0.'
-            . str_repeat('0', self::SCALE)
-            . '5';
+            .str_repeat('0', self::SCALE)
+            .'5';
 
         if (str_starts_with($value, '-')) {
-            $increment = '-' . $increment;
+            $increment = '-'.$increment;
         }
 
         return bcadd(

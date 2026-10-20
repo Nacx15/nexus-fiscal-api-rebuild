@@ -16,8 +16,7 @@ final class CreateInvoice
     public function __construct(
         private readonly CompanyContext $companyContext,
         private readonly DecimalCalculator $decimal
-    ) {
-    }
+    ) {}
 
     public function execute(
         array $data,
@@ -55,35 +54,25 @@ final class CreateInvoice
                 /*
                  * Snapshot del receptor.
                  */
-                'receiver_rfc' =>
-                    $client->rfc,
+                'receiver_rfc' => $client->rfc,
 
-                'receiver_name' =>
-                    $client->business_name,
+                'receiver_name' => $client->business_name,
 
-                'receiver_tax_regime' =>
-                    $client->tax_regime,
+                'receiver_tax_regime' => $client->tax_regime,
 
-                'receiver_postal_code' =>
-                    $client->postal_code,
+                'receiver_postal_code' => $client->postal_code,
 
-                'payment_form' =>
-                    $data['payment_form'],
+                'payment_form' => $data['payment_form'],
 
-                'payment_method' =>
-                    $data['payment_method'],
+                'payment_method' => $data['payment_method'],
 
-                'cfdi_use' =>
-                    $data['cfdi_use'],
+                'cfdi_use' => $data['cfdi_use'],
 
-                'currency' =>
-                    $data['currency'] ?? 'MXN',
+                'currency' => $data['currency'] ?? 'MXN',
 
-                'exchange_rate' =>
-                    '1.000000',
+                'exchange_rate' => '1.000000',
 
-                'notes' =>
-                    $data['notes'] ?? null,
+                'notes' => $data['notes'] ?? null,
             ]);
 
             $invoiceSubtotal = '0.000000';
@@ -99,8 +88,7 @@ final class CreateInvoice
                 '0.000000';
 
             foreach (
-                $data['items']
-                as $index => $itemData
+                $data['items'] as $index => $itemData
             ) {
                 $product = Product::query()
                     ->where(
@@ -147,8 +135,7 @@ final class CreateInvoice
                     ) > 0
                 ) {
                     throw ValidationException::withMessages([
-                        "items.{$index}.discount" =>
-                            'The discount cannot exceed the item subtotal.',
+                        "items.{$index}.discount" => 'The discount cannot exceed the item subtotal.',
                     ]);
                 }
 
@@ -167,50 +154,37 @@ final class CreateInvoice
                 $item = $invoice
                     ->items()
                     ->create([
-                        'product_id' =>
-                            $product->id,
+                        'product_id' => $product->id,
 
-                        'position' =>
-                            $index + 1,
+                        'position' => $index + 1,
 
-                        'product_code' =>
-                            $product->sat_product_code,
+                        'product_code' => $product->sat_product_code,
 
-                        'unit_code' =>
-                            $product->sat_unit_code,
+                        'unit_code' => $product->sat_unit_code,
 
-                        'unit_name' =>
-                            $product->unit_name,
+                        'unit_name' => $product->unit_name,
 
-                        'description' =>
-                            $product->description,
+                        'description' => $product->description,
 
-                        'quantity' =>
-                            $quantity,
+                        'quantity' => $quantity,
 
-                        'unit_price' =>
-                            $unitPrice,
+                        'unit_price' => $unitPrice,
 
-                        'discount' =>
-                            $discount,
+                        'discount' => $discount,
 
-                        'subtotal' =>
-                            $subtotal,
+                        'subtotal' => $subtotal,
 
-                        'tax_object' =>
-                            $product->tax_object,
+                        'tax_object' => $product->tax_object,
 
                         /*
                          * Se actualiza al terminar
                          * impuestos.
                          */
-                        'total' =>
-                            '0.000000',
+                        'total' => '0.000000',
                     ]);
 
                 foreach (
-                    $itemData['taxes'] ?? []
-                    as $taxData
+                    $itemData['taxes'] ?? [] as $taxData
                 ) {
                     $rate =
                         $taxData['rate_or_quota']
@@ -222,8 +196,7 @@ final class CreateInvoice
                         && $rate === null
                     ) {
                         throw ValidationException::withMessages([
-                            "items.{$index}.taxes" =>
-                                'rate_or_quota is required for non-exempt taxes.',
+                            "items.{$index}.taxes" => 'rate_or_quota is required for non-exempt taxes.',
                         ]);
                     }
 
@@ -243,26 +216,20 @@ final class CreateInvoice
                     }
 
                     $item->taxes()->create([
-                        'tax' =>
-                            $taxData['tax'],
+                        'tax' => $taxData['tax'],
 
-                        'type' =>
-                            $taxData['type'],
+                        'type' => $taxData['type'],
 
-                        'factor_type' =>
-                            $taxData['factor_type'],
+                        'factor_type' => $taxData['factor_type'],
 
-                        'rate_or_quota' =>
-                            $rate !== null
+                        'rate_or_quota' => $rate !== null
                                 ? $this->decimal
                                     ->normalize($rate)
                                 : null,
 
-                        'base' =>
-                            $taxBase,
+                        'base' => $taxBase,
 
-                        'amount' =>
-                            $amount,
+                        'amount' => $amount,
                     ]);
 
                     if (
@@ -331,20 +298,15 @@ final class CreateInvoice
             }
 
             $invoice->update([
-                'subtotal' =>
-                    $invoiceSubtotal,
+                'subtotal' => $invoiceSubtotal,
 
-                'discount' =>
-                    $invoiceDiscount,
+                'discount' => $invoiceDiscount,
 
-                'transferred_taxes' =>
-                    $invoiceTransferred,
+                'transferred_taxes' => $invoiceTransferred,
 
-                'withheld_taxes' =>
-                    $invoiceWithheld,
+                'withheld_taxes' => $invoiceWithheld,
 
-                'total' =>
-                    $invoiceTotal,
+                'total' => $invoiceTotal,
             ]);
 
             return $invoice

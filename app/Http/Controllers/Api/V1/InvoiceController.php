@@ -3,20 +3,18 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Application\Invoices\CreateInvoice;
+use App\Application\Invoices\MarkInvoiceReady;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ReadyInvoiceRequest;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Http\Resources\InvoiceResource;
 use App\Models\Company;
 use App\Models\Invoice;
-use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\JsonResponse;
-use App\Application\Invoices\MarkInvoiceReady;
-use App\Http\Requests\ReadyInvoiceRequest;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class InvoiceController extends Controller
 {
-
     public function ready(
         ReadyInvoiceRequest $request,
         Company $company,

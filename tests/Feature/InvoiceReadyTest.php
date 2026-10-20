@@ -6,7 +6,6 @@ use App\Models\Client;
 use App\Models\Company;
 use App\Models\CompanyFiscalProfile;
 use App\Models\FiscalSequence;
-use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\User;
 use Database\Seeders\SatCatalogTestSeeder;
@@ -132,9 +131,9 @@ class InvoiceReadyTest extends TestCase
             $product
         );
 
-        $url = "/api/v1/companies/"
-            . "{$company->public_id}/invoices/"
-            . "{$invoiceId}/ready";
+        $url = '/api/v1/companies/'
+            ."{$company->public_id}/invoices/"
+            ."{$invoiceId}/ready";
 
         $response = $this->postJson($url, [
             'series' => 'F',
@@ -179,9 +178,9 @@ class InvoiceReadyTest extends TestCase
             $product
         );
 
-        $url = "/api/v1/companies/"
-            . "{$company->public_id}/invoices/"
-            . "{$invoiceId}/ready";
+        $url = '/api/v1/companies/'
+            ."{$company->public_id}/invoices/"
+            ."{$invoiceId}/ready";
 
         $this->postJson($url, [
             'series' => 'F',
@@ -270,7 +269,6 @@ class InvoiceReadyTest extends TestCase
         );
     }
 
-    
     public function test_viewer_cannot_mark_invoice_ready(): void
     {
         [
@@ -358,5 +356,4 @@ class InvoiceReadyTest extends TestCase
             'folio' => null,
         ]);
     }
-
 }

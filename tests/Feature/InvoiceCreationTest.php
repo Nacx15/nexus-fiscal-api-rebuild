@@ -12,7 +12,7 @@ use Tests\TestCase;
 
 class InvoiceCreationTest extends TestCase
 {
-   use RefreshDatabase;
+    use RefreshDatabase;
 
     protected function setUp(): void
     {
@@ -53,8 +53,7 @@ class InvoiceCreationTest extends TestCase
             ->for($company)
             ->create([
                 'rfc' => 'ABC010101ABC',
-                'business_name' =>
-                    'CLIENTE ORIGINAL',
+                'business_name' => 'CLIENTE ORIGINAL',
                 'tax_regime' => '601',
                 'postal_code' => '97000',
             ]);
@@ -62,20 +61,15 @@ class InvoiceCreationTest extends TestCase
         $product = Product::factory()
             ->for($company)
             ->create([
-                'sat_product_code' =>
-                    '81111500',
+                'sat_product_code' => '81111500',
 
-                'sat_unit_code' =>
-                    'E48',
+                'sat_unit_code' => 'E48',
 
-                'description' =>
-                    'Desarrollo de software',
+                'description' => 'Desarrollo de software',
 
-                'unit_price' =>
-                    '100.000000',
+                'unit_price' => '100.000000',
 
-                'tax_object' =>
-                    '02',
+                'tax_object' => '02',
             ]);
 
         $response = $this
@@ -83,8 +77,7 @@ class InvoiceCreationTest extends TestCase
             ->postJson(
                 "/api/v1/companies/{$company->public_id}/invoices",
                 [
-                    'client_id' =>
-                        $client->public_id,
+                    'client_id' => $client->public_id,
 
                     'payment_form' => '03',
 
@@ -94,30 +87,23 @@ class InvoiceCreationTest extends TestCase
 
                     'items' => [
                         [
-                            'product_id' =>
-                                $product->public_id,
+                            'product_id' => $product->public_id,
 
-                            'quantity' =>
-                                '2.000000',
+                            'quantity' => '2.000000',
 
-                            'unit_price' =>
-                                '100.000000',
+                            'unit_price' => '100.000000',
 
-                            'discount' =>
-                                '10.000000',
+                            'discount' => '10.000000',
 
                             'taxes' => [
                                 [
                                     'tax' => '002',
 
-                                    'type' =>
-                                        'transferred',
+                                    'type' => 'transferred',
 
-                                    'factor_type' =>
-                                        'Tasa',
+                                    'factor_type' => 'Tasa',
 
-                                    'rate_or_quota' =>
-                                        '0.160000',
+                                    'rate_or_quota' => '0.160000',
                                 ],
                             ],
                         ],
@@ -151,20 +137,15 @@ class InvoiceCreationTest extends TestCase
         $this->assertDatabaseHas(
             'invoices',
             [
-                'company_id' =>
-                    $company->id,
+                'company_id' => $company->id,
 
-                'client_id' =>
-                    $client->id,
+                'client_id' => $client->id,
 
-                'status' =>
-                    'draft',
+                'status' => 'draft',
 
-                'series' =>
-                    null,
+                'series' => null,
 
-                'folio' =>
-                    null,
+                'folio' => null,
             ]
         );
     }
@@ -184,30 +165,23 @@ class InvoiceCreationTest extends TestCase
         $client = Client::factory()
             ->for($company)
             ->create([
-                'business_name' =>
-                    'CLIENTE ORIGINAL',
+                'business_name' => 'CLIENTE ORIGINAL',
 
-                'rfc' =>
-                    'ABC010101ABC',
+                'rfc' => 'ABC010101ABC',
 
-                'tax_regime' =>
-                    '601',
+                'tax_regime' => '601',
 
-                'postal_code' =>
-                    '97000',
+                'postal_code' => '97000',
             ]);
 
         $product = Product::factory()
             ->for($company)
             ->create([
-                'description' =>
-                    'SERVICIO ORIGINAL',
+                'description' => 'SERVICIO ORIGINAL',
 
-                'unit_price' =>
-                    '100.000000',
+                'unit_price' => '100.000000',
 
-                'tax_object' =>
-                    '02',
+                'tax_object' => '02',
             ]);
 
         $response = $this
@@ -215,8 +189,7 @@ class InvoiceCreationTest extends TestCase
             ->postJson(
                 "/api/v1/companies/{$company->public_id}/invoices",
                 [
-                    'client_id' =>
-                        $client->public_id,
+                    'client_id' => $client->public_id,
 
                     'payment_form' => '03',
                     'payment_method' => 'PUE',
@@ -224,11 +197,9 @@ class InvoiceCreationTest extends TestCase
 
                     'items' => [
                         [
-                            'product_id' =>
-                                $product->public_id,
+                            'product_id' => $product->public_id,
 
-                            'quantity' =>
-                                '1.000000',
+                            'quantity' => '1.000000',
 
                             'taxes' => [],
                         ],
@@ -242,13 +213,11 @@ class InvoiceCreationTest extends TestCase
             $response->json('data.id');
 
         $client->update([
-            'business_name' =>
-                'CLIENTE MODIFICADO',
+            'business_name' => 'CLIENTE MODIFICADO',
         ]);
 
         $product->update([
-            'description' =>
-                'SERVICIO MODIFICADO',
+            'description' => 'SERVICIO MODIFICADO',
         ]);
 
         $response = $this
@@ -302,8 +271,7 @@ class InvoiceCreationTest extends TestCase
             ->postJson(
                 "/api/v1/companies/{$companyB->public_id}/invoices",
                 [
-                    'client_id' =>
-                        $client->public_id,
+                    'client_id' => $client->public_id,
 
                     'payment_form' => '03',
                     'payment_method' => 'PUE',
@@ -311,11 +279,9 @@ class InvoiceCreationTest extends TestCase
 
                     'items' => [
                         [
-                            'product_id' =>
-                                $product->public_id,
+                            'product_id' => $product->public_id,
 
-                            'quantity' =>
-                                '1.000000',
+                            'quantity' => '1.000000',
 
                             'taxes' => [],
                         ],
@@ -335,6 +301,4 @@ class InvoiceCreationTest extends TestCase
             )
             ->assertNotFound();
     }
-
-    
 }

@@ -5,9 +5,9 @@ namespace Tests\Feature;
 use App\Models\Client;
 use App\Models\Company;
 use App\Models\User;
+use Database\Seeders\SatCatalogTestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use Database\Seeders\SatCatalogTestSeeder;
 
 class ClientTenantIsolationTest extends TestCase
 {
@@ -190,5 +190,4 @@ class ClientTenantIsolationTest extends TestCase
             SatCatalogTestSeeder::class
         );
     }
-    
 }

@@ -17,8 +17,7 @@ final class MarkInvoiceReady
     public function __construct(
         private readonly CompanyContext $companyContext,
         private readonly FiscalSequenceService $folioService
-    ) {
-    }
+    ) {}
 
     public function execute(
         Invoice $invoice,
