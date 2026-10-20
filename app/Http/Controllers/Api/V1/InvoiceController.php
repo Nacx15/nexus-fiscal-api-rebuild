@@ -11,9 +11,26 @@ use App\Models\Invoice;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\JsonResponse;
+use App\Application\Invoices\MarkInvoiceReady;
+use App\Http\Requests\ReadyInvoiceRequest;
 
 class InvoiceController extends Controller
 {
+
+    public function ready(
+        ReadyInvoiceRequest $request,
+        Company $company,
+        Invoice $invoice,
+        MarkInvoiceReady $markInvoiceReady
+    ): InvoiceResource {
+        $invoice = $markInvoiceReady->execute(
+            $invoice,
+            $request->validated('series')
+        );
+
+        return InvoiceResource::make($invoice);
+    }
+
     public function index(
         Company $company
     ): AnonymousResourceCollection {

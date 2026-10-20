@@ -21,5 +21,6 @@ Route::middleware('auth:sanctum')
         Route::apiResource('clients', ClientController::class)->except(['destroy',]);
         Route::apiResource('products',ProductController::class)->except(['destroy',]);
         Route::apiResource('invoices',InvoiceController::class)->only(['index','store','show',]);
+        Route::post('invoices/{invoice}/ready',[InvoiceController::class, 'ready']);
     });
 });
