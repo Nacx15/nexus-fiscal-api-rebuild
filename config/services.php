@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'sw_sapien' => [
+        'base_url' => env(
+            'SW_SAPIEN_BASE_URL',
+            'https://services.test.sw.com.mx'
+        ),
+    ],
+
 ];

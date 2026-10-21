@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Application\Company\CompanyContext;
+use App\Domain\Fiscal\Contracts\PacStampingGateway;
+use App\Infrastructure\Pac\SwSapien\SwSapienStampingGateway;
 use App\Models\Invoice;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -18,6 +20,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(
             CompanyContext::class,
             fn () => new CompanyContext
+        );
+
+        $this->app->bind(
+            PacStampingGateway::class,
+            SwSapienStampingGateway::class
         );
     }
 
