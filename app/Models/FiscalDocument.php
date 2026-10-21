@@ -82,4 +82,9 @@ class FiscalDocument extends Model
             FiscalDocumentFile::class
         );
     }
+
+    public function stampAttempts()
+    {
+        return $this->hasMany(FiscalStampAttempt::class);
+    }
 }

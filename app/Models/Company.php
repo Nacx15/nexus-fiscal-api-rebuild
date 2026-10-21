@@ -82,4 +82,9 @@ class Company extends Model
     {
         return $this->hasMany(FiscalDocument::class);
     }
+
+    public function fiscalStampAttempts()
+    {
+        return $this->hasMany(FiscalStampAttempt::class);
+    }
 }
