@@ -16,6 +16,7 @@ final class BuildSignedInvoiceCfdi
         private readonly BuildInvoiceCfdi $xmlBuilder,
         private readonly CsdCredentialLoader $credentialLoader,
         private readonly SignedCfdiXmlService $xmlSigner,
+        private readonly ValidateSignedCfdiForStamping $validator,
     ) {}
 
     public function execute(
@@ -60,5 +61,12 @@ final class BuildSignedInvoiceCfdi
             $unsignedXml,
             $credential
         );
+
+        $this->validator->execute(
+            $result,
+            $credential
+        );
+
+        return $result;
     }
 }
