@@ -19,6 +19,12 @@ class PacAccount extends Model
         'active',
     ];
 
+    protected $hidden = [
+        'username',
+        'password',
+        'token',
+    ];
+
     protected function casts(): array
     {
         return [
