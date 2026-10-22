@@ -5,6 +5,7 @@ namespace App\Application\Fiscal;
 use App\Application\Company\CompanyContext;
 use App\Domain\Fiscal\Enums\FiscalDocumentStatus;
 use App\Domain\Fiscal\Enums\FiscalStampAttemptStatus;
+use App\Domain\Fiscal\Enums\FiscalStampAuditAction;
 use App\Models\FiscalDocument;
 use App\Models\FiscalStampAttempt;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +14,8 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 final class MarkStampAttemptUnknown
 {
     public function __construct(
-        private readonly CompanyContext $companyContext
+        private readonly CompanyContext $companyContext,
+        private readonly RecordFiscalStampTransition $audit,
     ) {}
 
     public function execute(
@@ -64,6 +66,12 @@ final class MarkStampAttemptUnknown
              * porque aún no existe evidencia
              * suficiente para darlo por fallido.
              */
+
+            $this->audit->record(
+                $attempt,
+                FiscalStampAuditAction::BecameUnknown,
+                FiscalStampAttemptStatus::Dispatching
+            );
 
             return $attempt->refresh();
         });

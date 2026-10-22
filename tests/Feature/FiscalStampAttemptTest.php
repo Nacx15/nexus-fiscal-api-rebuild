@@ -6,7 +6,9 @@ use App\Application\Company\CompanyContext;
 use App\Application\Fiscal\BeginStampAttempt;
 use App\Application\Fiscal\MarkStampAttemptDispatching;
 use App\Application\Fiscal\MarkStampAttemptUnknown;
+use App\Application\Fiscal\RecordFiscalStampTransition;
 use App\Domain\Fiscal\Enums\FiscalStampAttemptStatus;
+use App\Domain\Fiscal\Enums\FiscalStampAuditAction;
 use App\Infrastructure\Fiscal\Storage\PrivateStampXmlStore;
 use App\Models\Client;
 use App\Models\Company;
@@ -19,7 +21,10 @@ use Carbon\CarbonImmutable;
 use Database\Seeders\SatCatalogTestSeeder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use LogicException;
+use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Tests\TestCase;
 
@@ -372,5 +377,202 @@ class FiscalStampAttemptTest extends TestCase
                 1
             );
         }
+    }
+
+    public function test_reservation_creates_one_audit_event(): void
+    {
+        [$company, $document] = $this->prepareDocument();
+
+        $attempt = $this->begin($document);
+
+        $event = $attempt->auditEvents()
+            ->firstOrFail();
+
+        $this->assertSame(
+            FiscalStampAuditAction::Reserved,
+            $event->event_type
+        );
+
+        $this->assertSame(
+            $company->id,
+            $event->company_id
+        );
+
+        $this->assertSame(
+            $document->id,
+            $event->fiscal_document_id
+        );
+
+        $this->assertNull(
+            $event->previous_status
+        );
+
+        $this->assertSame(
+            'preparing',
+            $event->current_status
+        );
+
+        $this->assertNull($event->xml_sha256);
+        $this->assertNull($event->uuid);
+
+        /*
+        * La reserva idempotente no debe
+        * generar otra entrada de auditoría.
+        */
+        $sameAttempt = $this->begin($document);
+
+        $this->assertSame(
+            $attempt->id,
+            $sameAttempt->id
+        );
+
+        $this->assertDatabaseCount(
+            'fiscal_stamp_attempts',
+            1
+        );
+
+        $this->assertDatabaseCount(
+            'fiscal_stamp_audit_events',
+            1
+        );
+    }
+
+    public function test_attempt_and_audit_roll_back_together(): void
+    {
+        [$company, $document] = $this->prepareDocument();
+
+        try {
+            DB::transaction(function () use ($document) {
+                $this->begin($document);
+
+                $this->assertDatabaseCount(
+                    'fiscal_stamp_audit_events',
+                    1
+                );
+
+                throw new RuntimeException(
+                    'Forced rollback'
+                );
+            });
+
+            $this->fail(
+                'The transaction should have been rolled back.'
+            );
+        } catch (RuntimeException $exception) {
+            $this->assertSame(
+                'Forced rollback',
+                $exception->getMessage()
+            );
+        }
+
+        $this->assertDatabaseCount(
+            'fiscal_stamp_attempts',
+            0
+        );
+
+        $this->assertDatabaseCount(
+            'fiscal_stamp_audit_events',
+            0
+        );
+    }
+
+    public function test_audit_rejects_a_transition_that_did_not_happen(): void
+    {
+        [$company, $document] = $this->prepareDocument();
+
+        $attempt = $this->begin($document);
+
+        /*
+        * El intento sigue en preparing,
+        * pero solicitamos registrar prepared.
+        */
+        $this->expectException(
+            LogicException::class
+        );
+
+        try {
+            DB::transaction(function () use ($attempt) {
+                app(
+                    RecordFiscalStampTransition::class
+                )->record(
+                    $attempt,
+                    FiscalStampAuditAction::Prepared,
+                    FiscalStampAttemptStatus::Preparing
+                );
+            });
+        } finally {
+            $this->assertDatabaseCount(
+                'fiscal_stamp_audit_events',
+                1
+            );
+
+            $this->assertSame(
+                FiscalStampAttemptStatus::Preparing,
+                $attempt->fresh()->status
+            );
+        }
+    }
+
+    public function test_unknown_transition_is_audited_only_once(): void
+    {
+        Storage::fake('local');
+
+        [$company, $document] = $this->prepareDocument();
+
+        $attempt = $this->begin($document);
+
+        /*
+        * Fixture de estados.
+        * No es un XML fiscal auténtico.
+        */
+        $metadata = app(
+            PrivateStampXmlStore::class
+        )->put(
+            $attempt,
+            '<test>Audit state fixture</test>'
+        );
+
+        $attempt->update([
+            ...$metadata,
+            'status' => FiscalStampAttemptStatus::Prepared,
+            'preflight_passed_at' => now(),
+        ]);
+
+        $attempt = app(
+            MarkStampAttemptDispatching::class
+        )->execute($attempt);
+
+        $attempt = app(
+            MarkStampAttemptUnknown::class
+        )->execute($attempt);
+
+        /*
+        * Segunda llamada idempotente.
+        */
+        $again = app(
+            MarkStampAttemptUnknown::class
+        )->execute($attempt);
+
+        $this->assertSame(
+            $attempt->id,
+            $again->id
+        );
+
+        $events = $attempt->auditEvents()
+            ->orderBy('id')
+            ->pluck('event_type')
+            ->map(fn (FiscalStampAuditAction $action) => $action->value)
+            ->all();
+
+        $this->assertSame([
+            'reserved',
+            'dispatch_started',
+            'became_unknown',
+        ], $events);
+
+        $this->assertDatabaseCount(
+            'fiscal_stamp_audit_events',
+            3
+        );
     }
 }

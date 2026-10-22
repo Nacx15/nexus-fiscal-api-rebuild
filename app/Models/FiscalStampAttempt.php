@@ -6,6 +6,7 @@ use App\Domain\Fiscal\Enums\FiscalStampAttemptStatus;
 use App\Models\Concerns\HasPublicUlid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FiscalStampAttempt extends Model
 {
@@ -56,5 +57,13 @@ class FiscalStampAttempt extends Model
     public function fiscalDocument(): BelongsTo
     {
         return $this->belongsTo(FiscalDocument::class);
+    }
+
+    public function auditEvents(): HasMany
+    {
+        return $this->hasMany(
+            FiscalStampAuditEvent::class,
+            'fiscal_stamp_attempt_id'
+        );
     }
 }

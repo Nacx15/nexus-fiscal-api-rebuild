@@ -13,6 +13,7 @@ use App\Domain\Fiscal\Contracts\PacStampRecoveryGateway;
 use App\Domain\Fiscal\Dto\PacRecoveryResult;
 use App\Domain\Fiscal\Dto\PacStampResult;
 use App\Domain\Fiscal\Enums\FiscalStampAttemptStatus;
+use App\Domain\Fiscal\Enums\FiscalStampAuditAction;
 use App\Infrastructure\Fiscal\Storage\PrivateStampXmlStore;
 use App\Models\Client;
 use App\Models\Company;
@@ -769,6 +770,162 @@ class CompleteStampAttemptTest extends TestCase
         $this->assertDatabaseCount(
             'fiscal_document_files',
             0
+        );
+    }
+
+    public function test_confirmed_stamp_is_audited_with_uuid_and_hash(): void
+    {
+        [$company, $document, $attempt, $original] =
+            $this->prepareFixture();
+
+        $result = $this->complete(
+            $attempt,
+            PacStampResult::received(
+                self::UUID,
+                $this->stampedXml($original)
+            )
+        );
+
+        $this->assertSame(
+            FiscalStampAttemptStatus::Stamped,
+            $result->status
+        );
+
+        $event = $result->auditEvents()
+            ->where('event_type', 'stamped')
+            ->firstOrFail();
+
+        $this->assertSame(
+            'dispatching',
+            $event->previous_status
+        );
+
+        $this->assertSame(
+            'stamped',
+            $event->current_status
+        );
+
+        $this->assertSame(
+            strtoupper(self::UUID),
+            $event->uuid
+        );
+
+        $this->assertSame(
+            hash('sha256', $original),
+            $event->xml_sha256
+        );
+
+        $this->assertSame(
+            $company->id,
+            $event->company_id
+        );
+
+        $this->assertDatabaseCount(
+            'fiscal_stamp_audit_events',
+            3
+        );
+    }
+
+    public function test_recovered_stamp_audits_unknown_to_stamped(): void
+    {
+        [$company, $document, $attempt, $original] =
+            $this->prepareFixture();
+
+        $attempt = app(
+            MarkStampAttemptUnknown::class
+        )->execute($attempt);
+
+        $this->assertSame(
+            FiscalStampAttemptStatus::Unknown,
+            $attempt->status
+        );
+
+        /*
+        * Simulamos el resultado recuperado
+        * de un UUID previamente confirmado.
+        *
+        * Aquí utilizamos directamente el
+        * servicio de confirmación, ya probado.
+        */
+        $result = $this->complete(
+            $attempt,
+            PacStampResult::received(
+                self::UUID,
+                $this->stampedXml($original)
+            )
+        );
+
+        $this->assertSame(
+            FiscalStampAttemptStatus::Stamped,
+            $result->status
+        );
+
+        $event = $result->auditEvents()
+            ->where('event_type', 'stamped')
+            ->firstOrFail();
+
+        $this->assertSame(
+            'unknown',
+            $event->previous_status
+        );
+
+        $this->assertSame(
+            'stamped',
+            $event->current_status
+        );
+
+        $this->assertSame(
+            strtoupper(self::UUID),
+            $event->uuid
+        );
+
+        $this->assertSame([
+            'reserved',
+            'dispatch_started',
+            'became_unknown',
+            'stamped',
+        ], $result->auditEvents()
+            ->orderBy('id')
+            ->pluck('event_type')
+            ->map(fn (FiscalStampAuditAction $action) => $action->value)
+            ->all());
+    }
+
+    public function test_repeated_stamp_confirmation_does_not_duplicate_audit(): void
+    {
+        [$company, $document, $attempt, $original] =
+            $this->prepareFixture();
+
+        $response = PacStampResult::received(
+            self::UUID,
+            $this->stampedXml($original)
+        );
+
+        $first = $this->complete(
+            $attempt,
+            $response
+        );
+
+        $second = $this->complete(
+            $attempt,
+            $response
+        );
+
+        $this->assertSame(
+            $first->id,
+            $second->id
+        );
+
+        $this->assertSame(
+            1,
+            $first->auditEvents()
+                ->where('event_type', 'stamped')
+                ->count()
+        );
+
+        $this->assertDatabaseCount(
+            'fiscal_stamp_audit_events',
+            3
         );
     }
 }

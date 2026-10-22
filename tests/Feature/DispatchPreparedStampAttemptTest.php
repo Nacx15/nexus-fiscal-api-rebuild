@@ -10,6 +10,7 @@ use App\Domain\Fiscal\Contracts\PacAccessTokenResolver;
 use App\Domain\Fiscal\Contracts\PacStampingGateway;
 use App\Domain\Fiscal\Dto\PacStampResult;
 use App\Domain\Fiscal\Enums\FiscalStampAttemptStatus;
+use App\Domain\Fiscal\Enums\FiscalStampAuditAction;
 use App\Infrastructure\Fiscal\Storage\PrivateStampXmlStore;
 use App\Models\Client;
 use App\Models\Company;
@@ -332,6 +333,21 @@ class DispatchPreparedStampAttemptTest extends TestCase
         $this->assertDatabaseCount(
             'fiscal_stamp_attempts',
             1
+        );
+
+        $this->assertSame([
+            'reserved',
+            'dispatch_started',
+            'stamped',
+        ], $result->auditEvents()
+            ->orderBy('id')
+            ->pluck('event_type')
+            ->map(fn (FiscalStampAuditAction $action) => $action->value)
+            ->all());
+
+        $this->assertDatabaseCount(
+            'fiscal_stamp_audit_events',
+            3
         );
     }
 

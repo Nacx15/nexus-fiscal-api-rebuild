@@ -5,6 +5,7 @@ namespace App\Application\Fiscal;
 use App\Application\Company\CompanyContext;
 use App\Domain\Fiscal\Enums\FiscalDocumentStatus;
 use App\Domain\Fiscal\Enums\FiscalStampAttemptStatus;
+use App\Domain\Fiscal\Enums\FiscalStampAuditAction;
 use App\Domain\Invoice\Enums\InvoiceStatus;
 use App\Infrastructure\Fiscal\Storage\PrivateStampXmlStore;
 use App\Models\FiscalDocument;
@@ -17,7 +18,8 @@ final class MarkStampAttemptDispatching
 {
     public function __construct(
         private readonly CompanyContext $companyContext,
-        private readonly PrivateStampXmlStore $storage
+        private readonly PrivateStampXmlStore $storage,
+        private readonly RecordFiscalStampTransition $audit,
     ) {}
 
     public function execute(
@@ -83,6 +85,12 @@ final class MarkStampAttemptDispatching
             $invoice->update([
                 'status' => InvoiceStatus::Stamping,
             ]);
+
+            $this->audit->record(
+                $attempt,
+                FiscalStampAuditAction::DispatchStarted,
+                FiscalStampAttemptStatus::Prepared
+            );
 
             return $attempt->refresh();
         });

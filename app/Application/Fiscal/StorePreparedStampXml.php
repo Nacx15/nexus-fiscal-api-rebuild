@@ -7,6 +7,7 @@ use App\Domain\Fiscal\Cfdi\Exceptions\InvalidCfdiXml;
 use App\Domain\Fiscal\Cfdi\SignedCfdiResult;
 use App\Domain\Fiscal\Enums\FiscalDocumentStatus;
 use App\Domain\Fiscal\Enums\FiscalStampAttemptStatus;
+use App\Domain\Fiscal\Enums\FiscalStampAuditAction;
 use App\Domain\Invoice\Enums\InvoiceStatus;
 use App\Infrastructure\Fiscal\Storage\PrivateStampXmlStore;
 use App\Models\FiscalDocument;
@@ -23,7 +24,8 @@ final class StorePreparedStampXml
     public function __construct(
         private readonly CompanyContext $companyContext,
         private readonly ValidateSignedCfdiForStamping $validator,
-        private readonly PrivateStampXmlStore $storage
+        private readonly PrivateStampXmlStore $storage,
+        private readonly RecordFiscalStampTransition $audit,
     ) {}
 
     public function execute(
@@ -192,6 +194,12 @@ final class StorePreparedStampXml
                 'status' => FiscalStampAttemptStatus::Prepared,
                 'preflight_passed_at' => now(),
             ]);
+
+            $this->audit->record(
+                $attempt,
+                FiscalStampAuditAction::Prepared,
+                FiscalStampAttemptStatus::Preparing
+            );
 
             return $attempt->refresh();
         });

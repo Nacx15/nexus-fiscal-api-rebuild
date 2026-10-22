@@ -8,6 +8,7 @@ use App\Domain\Fiscal\Dto\PacStampResult;
 use App\Domain\Fiscal\Enums\FiscalDocumentStatus;
 use App\Domain\Fiscal\Enums\FiscalFileType;
 use App\Domain\Fiscal\Enums\FiscalStampAttemptStatus;
+use App\Domain\Fiscal\Enums\FiscalStampAuditAction;
 use App\Domain\Fiscal\Enums\PacStampOutcome;
 use App\Domain\Invoice\Enums\InvoiceStatus;
 use App\Infrastructure\Fiscal\Storage\PrivateStampXmlStore;
@@ -29,6 +30,7 @@ final class CompleteStampAttempt
         private readonly PrivateStampXmlStore $originalStore,
         private readonly StoreFiscalDocumentFile $fileStore,
         private readonly StampedCfdiVerifier $verifier,
+        private readonly RecordFiscalStampTransition $audit,
     ) {}
 
     public function execute(
@@ -289,11 +291,19 @@ final class CompleteStampAttempt
             ),
         ]);
 
+        $previousStatus = $attempt->status;
+
         $attempt->update([
             'status' => FiscalStampAttemptStatus::Stamped,
             'provider_reference' => $stamp->uuid,
             'completed_at' => now(),
         ]);
+
+        $this->audit->record(
+            $attempt,
+            FiscalStampAuditAction::Stamped,
+            $previousStatus
+        );
 
         return $attempt->refresh();
     }
@@ -365,6 +375,12 @@ final class CompleteStampAttempt
             $invoice->update([
                 'status' => InvoiceStatus::StampFailed,
             ]);
+
+            $this->audit->record(
+                $attempt,
+                FiscalStampAuditAction::Rejected,
+                FiscalStampAttemptStatus::Dispatching
+            );
 
             return $attempt->refresh();
         });

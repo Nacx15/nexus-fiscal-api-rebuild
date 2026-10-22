@@ -5,6 +5,7 @@ namespace App\Application\Fiscal;
 use App\Application\Company\CompanyContext;
 use App\Domain\Fiscal\Enums\FiscalDocumentStatus;
 use App\Domain\Fiscal\Enums\FiscalStampAttemptStatus;
+use App\Domain\Fiscal\Enums\FiscalStampAuditAction;
 use App\Domain\Invoice\Enums\InvoiceStatus;
 use App\Models\FiscalDocument;
 use App\Models\FiscalStampAttempt;
@@ -16,7 +17,8 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 final class BeginStampAttempt
 {
     public function __construct(
-        private readonly CompanyContext $companyContext
+        private readonly CompanyContext $companyContext,
+        private readonly RecordFiscalStampTransition $audit,
     ) {}
 
     public function execute(
@@ -112,7 +114,7 @@ final class BeginStampAttempt
              * La fecha y zona horaria quedan
              * congeladas desde este momento.
              */
-            return $document->stampAttempts()->create([
+            $attempt = $document->stampAttempts()->create([
                 'company_id' => $companyId,
                 'attempt_number' => 1,
                 'status' => FiscalStampAttemptStatus::Preparing,
@@ -120,6 +122,15 @@ final class BeginStampAttempt
                 'cfdi_timezone' => $issuedAt->getTimezone()->getName(),
                 'provider' => 'sw_sapien',
             ]);
+
+            $this->audit->record(
+                $attempt,
+                FiscalStampAuditAction::Reserved,
+                null
+            );
+
+            return $attempt;
+
         }, 3);
     }
 }
