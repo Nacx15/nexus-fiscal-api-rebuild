@@ -159,24 +159,54 @@ final class CompleteStampAttempt
             ->firstOrFail();
 
         /*
-        * 1. Validar el estado de la operación.
+        * Hay dos caminos permitidos:
         *
-        * Si la factura o el intento no están
-        * en el estado esperado, es un conflicto.
+        * A) Respuesta inicial del PAC:
+        *    dispatching + stamping.
+        *
+        * B) Recuperación de evidencia:
+        *    unknown + unknown.
+        *
+        * En ambos casos Invoice permanece
+        * en stamping hasta completar.
         */
+        $initialConfirmation = (
+            $attempt->status
+                === FiscalStampAttemptStatus::Dispatching
+            && $document->status
+                === FiscalDocumentStatus::Stamping
+        );
+
+        $recoveredConfirmation = (
+            $attempt->status
+                === FiscalStampAttemptStatus::Unknown
+            && $document->status
+                === FiscalDocumentStatus::Unknown
+        );
+
         if (
             $document->documentable_type
                 !== (new Invoice)->getMorphClass()
-            || $attempt->status
-                !== FiscalStampAttemptStatus::Dispatching
-            || $document->status
-                !== FiscalDocumentStatus::Stamping
+            || (
+                ! $initialConfirmation
+                && ! $recoveredConfirmation
+            )
             || $invoice->status
                 !== InvoiceStatus::Stamping
             || $attempt->preflight_passed_at === null
         ) {
             throw new ConflictHttpException(
                 'Attempt cannot be confirmed in its current state.'
+            );
+        }
+
+        /*
+        * La evidencia local debe conservar
+        * los mismos bytes que enviamos.
+        */
+        if (! $this->originalStore->verify($attempt)) {
+            throw new InvalidStampedCfdi(
+                'The original signed XML is missing or corrupted.'
             );
         }
 

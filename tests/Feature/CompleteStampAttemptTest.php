@@ -6,6 +6,11 @@ use App\Application\Company\CompanyContext;
 use App\Application\Fiscal\BeginStampAttempt;
 use App\Application\Fiscal\CompleteStampAttempt;
 use App\Application\Fiscal\MarkStampAttemptDispatching;
+use App\Application\Fiscal\MarkStampAttemptUnknown;
+use App\Application\Fiscal\ReconcileStampAttempt;
+use App\Domain\Fiscal\Contracts\PacAccessTokenResolver;
+use App\Domain\Fiscal\Contracts\PacStampRecoveryGateway;
+use App\Domain\Fiscal\Dto\PacRecoveryResult;
 use App\Domain\Fiscal\Dto\PacStampResult;
 use App\Domain\Fiscal\Enums\FiscalStampAttemptStatus;
 use App\Infrastructure\Fiscal\Storage\PrivateStampXmlStore;
@@ -22,6 +27,7 @@ use DOMDocument;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use Mockery;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Tests\TestCase;
 
@@ -508,5 +514,261 @@ class CompleteStampAttemptTest extends TestCase
                 $document->fresh()->uuid
             );
         }
+    }
+
+    public function test_unknown_attempt_can_be_reconciled_with_recovered_xml(): void
+    {
+        [$company, $document, $attempt, $original] =
+            $this->prepareFixture();
+
+        app(
+            MarkStampAttemptUnknown::class
+        )->execute($attempt);
+
+        $tokenResolver = Mockery::mock(
+            PacAccessTokenResolver::class
+        );
+
+        $tokenResolver->shouldReceive(
+            'resolveForCompany'
+        )
+            ->once()
+            ->with($company->id)
+            ->andReturn('sandbox-token');
+
+        $this->app->instance(
+            PacAccessTokenResolver::class,
+            $tokenResolver
+        );
+
+        $gateway = Mockery::mock(
+            PacStampRecoveryGateway::class
+        );
+
+        $gateway->shouldReceive('recoverByUuid')
+            ->once()
+            ->with(
+                self::UUID,
+                'sandbox-token'
+            )
+            ->andReturn(
+                PacRecoveryResult::found(
+                    self::UUID,
+                    $this->stampedXml($original)
+                )
+            );
+
+        $this->app->instance(
+            PacStampRecoveryGateway::class,
+            $gateway
+        );
+
+        $result = app(ReconcileStampAttempt::class)
+            ->execute(
+                $attempt,
+                self::UUID
+            );
+
+        $this->assertSame(
+            FiscalStampAttemptStatus::Stamped,
+            $result->status
+        );
+
+        $this->assertSame(
+            'stamped',
+            $document->fresh()->status->value
+        );
+
+        $this->assertSame(
+            'stamped',
+            $document->documentable->fresh()->status->value
+        );
+
+        $this->assertSame(
+            strtoupper(self::UUID),
+            $document->fresh()->uuid
+        );
+
+        $this->assertDatabaseCount(
+            'fiscal_stamp_attempts',
+            1
+        );
+
+        $this->assertDatabaseCount(
+            'fiscal_document_files',
+            1
+        );
+    }
+
+    public function test_missing_uuid_at_pac_keeps_attempt_unknown(): void
+    {
+        [$company, $document, $attempt] =
+            $this->prepareFixture();
+
+        $tokenResolver = Mockery::mock(
+            PacAccessTokenResolver::class
+        );
+
+        $tokenResolver->shouldReceive(
+            'resolveForCompany'
+        )
+            ->once()
+            ->with($company->id)
+            ->andReturn('sandbox-token');
+
+        $this->app->instance(
+            PacAccessTokenResolver::class,
+            $tokenResolver
+        );
+
+        $gateway = Mockery::mock(
+            PacStampRecoveryGateway::class
+        );
+
+        $gateway->shouldReceive('recoverByUuid')
+            ->once()
+            ->andReturn(
+                PacRecoveryResult::notFound()
+            );
+
+        $this->app->instance(
+            PacStampRecoveryGateway::class,
+            $gateway
+        );
+
+        $result = app(ReconcileStampAttempt::class)
+            ->execute(
+                $attempt,
+                self::UUID
+            );
+
+        $this->assertSame(
+            FiscalStampAttemptStatus::Unknown,
+            $result->status
+        );
+
+        $this->assertSame(
+            'unknown',
+            $document->fresh()->status->value
+        );
+
+        $this->assertNull(
+            $document->fresh()->uuid
+        );
+
+        $this->assertDatabaseCount(
+            'fiscal_stamp_attempts',
+            1
+        );
+    }
+
+    public function test_reconciliation_without_uuid_never_contacts_pac(): void
+    {
+        [$company, $document, $attempt] =
+            $this->prepareFixture();
+
+        $gateway = Mockery::mock(
+            PacStampRecoveryGateway::class
+        );
+
+        $gateway->shouldNotReceive(
+            'recoverByUuid'
+        );
+
+        $this->app->instance(
+            PacStampRecoveryGateway::class,
+            $gateway
+        );
+
+        $result = app(ReconcileStampAttempt::class)
+            ->execute(
+                $attempt,
+                null
+            );
+
+        $this->assertSame(
+            FiscalStampAttemptStatus::Unknown,
+            $result->status
+        );
+
+        $this->assertSame(
+            'unknown',
+            $document->fresh()->status->value
+        );
+
+        $this->assertSame(
+            'stamping',
+            $document->documentable->fresh()->status->value
+        );
+    }
+
+    public function test_recovered_xml_must_match_original_invoice(): void
+    {
+        [$company, $document, $attempt, $original] =
+            $this->prepareFixture();
+
+        app(
+            MarkStampAttemptUnknown::class
+        )->execute($attempt);
+
+        $tokenResolver = Mockery::mock(
+            PacAccessTokenResolver::class
+        );
+
+        $tokenResolver->shouldReceive(
+            'resolveForCompany'
+        )
+            ->once()
+            ->with($company->id)
+            ->andReturn('sandbox-token');
+
+        $this->app->instance(
+            PacAccessTokenResolver::class,
+            $tokenResolver
+        );
+
+        $tamperedXml = str_replace(
+            'Descripcion="ORIGINAL"',
+            'Descripcion="OTRA FACTURA"',
+            $this->stampedXml($original)
+        );
+
+        $gateway = Mockery::mock(
+            PacStampRecoveryGateway::class
+        );
+
+        $gateway->shouldReceive('recoverByUuid')
+            ->once()
+            ->andReturn(
+                PacRecoveryResult::found(
+                    self::UUID,
+                    $tamperedXml
+                )
+            );
+
+        $this->app->instance(
+            PacStampRecoveryGateway::class,
+            $gateway
+        );
+
+        $result = app(ReconcileStampAttempt::class)
+            ->execute(
+                $attempt,
+                self::UUID
+            );
+
+        $this->assertSame(
+            FiscalStampAttemptStatus::Unknown,
+            $result->status
+        );
+
+        $this->assertNull(
+            $document->fresh()->uuid
+        );
+
+        $this->assertDatabaseCount(
+            'fiscal_document_files',
+            0
+        );
     }
 }
