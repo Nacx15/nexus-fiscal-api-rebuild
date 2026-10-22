@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Application\Company\CompanyContext;
+use App\Domain\Fiscal\Contracts\PacAccessTokenResolver;
 use App\Domain\Fiscal\Contracts\PacStampingGateway;
 use App\Infrastructure\Pac\SwSapien\SwSapienStampingGateway;
+use App\Infrastructure\Pac\UnconfiguredPacAccessTokenResolver;
 use App\Models\Invoice;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -25,6 +27,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             PacStampingGateway::class,
             SwSapienStampingGateway::class
+        );
+
+        $this->app->bind(
+            PacAccessTokenResolver::class,
+            UnconfiguredPacAccessTokenResolver::class
         );
     }
 
